@@ -2,7 +2,6 @@
 #include "semaphore.hpp"
 #include <iostream>
 #include <thread>
-#include <vector>
 
 int main() {
 

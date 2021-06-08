@@ -25,7 +25,7 @@ namespace example {
             count_++;
         }
 
-        unsigned int count() {
+        unsigned int count() const {
             return count_;
         };
 
