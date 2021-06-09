@@ -6,6 +6,7 @@
 #include <functional>
 #include <mutex>
 #include <thread>
+#include <utility>
 
 namespace example {
 
@@ -17,7 +18,7 @@ namespace example {
         }
 
         void work(std::function<void()> f) {
-            task_ = f;
+            task_ = std::move(f);
             {
                 std::lock_guard<std::mutex> lck(mutex_);
                 ready_ = true;
@@ -26,10 +27,12 @@ namespace example {
 
             cv_.notify_one();
 
-            td::unique_lock<std::mutex> lk(m_);
-            cv_.wait(lk, [this] {
-                return processed_;
-            });
+            {
+                std::unique_lock<std::mutex> lck(mutex_);
+                cv_.wait(lck, [this] {
+                  return processed_;
+                });
+            }
         }
 
         void stop_and_join() {
@@ -40,7 +43,7 @@ namespace example {
                     ready_ = true;
                 }
                 cv_.notify_one();
-                worker_.join();
+                thread_.join();
             }
         }
 
@@ -62,14 +65,14 @@ namespace example {
 
 
         void listen() {
-            while (!stop) {
+            while (!stop_) {
 
                 std::unique_lock<std::mutex> lk(mutex_);
                 cv_.wait(lk, [this] {
                     return ready_;
                 });
 
-                if (stop) break;
+                if (stop_) break;
 
                 task_();
 

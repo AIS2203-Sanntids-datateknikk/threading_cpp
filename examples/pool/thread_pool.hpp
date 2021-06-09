@@ -17,6 +17,10 @@ namespace example {
             }
         }
 
+        void submit(std::function<void()> f) {
+
+        }
+
         ~thread_pool() {
             for (auto &t : pool_) {
                 t.stop_and_join();
@@ -24,7 +28,7 @@ namespace example {
         }
 
     private:
-        std::vector<std::thread> pool_;
+        std::vector<thread_worker> pool_;
 
     };
 
