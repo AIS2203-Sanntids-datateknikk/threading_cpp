@@ -4,6 +4,7 @@
 
 #include <condition_variable>
 #include <functional>
+#include <future>
 #include <mutex>
 #include <thread>
 #include <utility>
@@ -13,6 +14,7 @@ namespace example {
     class thread_worker {
 
     public:
+
         thread_worker() {
             thread_ = std::thread(&thread_worker::listen, this);
         }
@@ -27,29 +29,32 @@ namespace example {
 
             cv_.notify_one();
 
+        }
+
+        void join(bool stop = false) {
             {
                 std::unique_lock<std::mutex> lck(mutex_);
                 cv_.wait(lck, [this] {
-                  return processed_;
+                    return processed_;
                 });
             }
-        }
 
-        void stop_and_join() {
-            if (!stop_) {
+            if (stop) {
                 stop_ = true;
                 {
                     std::lock_guard<std::mutex> lk(mutex_);
                     ready_ = true;
                 }
+
                 cv_.notify_one();
                 thread_.join();
             }
         }
 
-        ~thread_worker()
-        {
-            stop_and_join();
+        ~thread_worker() {
+            if (!stop_) {
+                join(true);
+            }
         }
 
     private:
@@ -62,7 +67,6 @@ namespace example {
 
         std::mutex mutex_;
         std::condition_variable cv_;
-
 
         void listen() {
             while (!stop_) {
@@ -80,7 +84,7 @@ namespace example {
                 processed_ = true;
 
                 lk.unlock();
-                cv_.notify_one();
+                cv_.notify_all();
             }
         }
     };

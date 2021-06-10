@@ -5,31 +5,36 @@
 #include "thread_worker.hpp"
 
 #include <vector>
+#include <any>
+#include <future>
 
 namespace example {
 
     class thread_pool {
 
     public:
-        thread_pool(unsigned int num_threads = std::thread::hardware_concurrency()): pool_(num_threads) {
-            for (int i = 0; i < num_threads; i++) {
-                pool_.emplace_back(thread_worker());
+        thread_pool(unsigned int num_threads = std::thread::hardware_concurrency()): available_(num_threads), busy_(num_threads) {
+            for (unsigned int i = 0; i < num_threads; i++) {
+                available_.emplace_back(std::make_unique<thread_worker<std::any>>());
             }
         }
 
-        void submit(std::function<void()> f) {
+        template<class T>
+        std::future<T> submit(std::function<T()> f) {
 
         }
 
         ~thread_pool() {
-            for (auto &t : pool_) {
-                t.stop_and_join();
+            for (auto &t : available_) {
+                //t.stop_and_join();
             }
         }
 
     private:
-        std::vector<thread_worker> pool_;
-
+        std::mutex mutex_;
+        std::condition_variable cv_;
+        std::vector<std::unique_ptr<thread_worker<T>> available_;
+        std::vector<std::unique_ptr<thread_worker>> busy_;
     };
 
 
