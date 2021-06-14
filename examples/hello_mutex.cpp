@@ -1,40 +1,27 @@
 
-/*
- * https://en.cppreference.com/w/cpp/thread/mutex
- *
- * This example shows how a mutex can be used to protect an std::map shared between two threads.
- *
- */
-
 #include <chrono>
 #include <iostream>
-#include <map>
 #include <mutex>
-#include <string>
 #include <thread>
 
-namespace {
-    std::mutex g_pages_mutex;
-    std::map<std::string, std::string> g_pages;
-
-    void save_page(const std::string &url) {
-        // simulate a long page fetch
-        std::this_thread::sleep_for(std::chrono::seconds(2));
-        std::string result = "fake content";
-
-        std::lock_guard<std::mutex> guard(g_pages_mutex);
-        g_pages[url] = result;
-    }
-}// namespace
-
 int main() {
-    std::thread t1(save_page, "http://foo");
-    std::thread t2(save_page, "http://bar");
-    t1.join();
-    t2.join();
 
-    // safe to access g_pages without lock now, as the threads are joined
-    for (const auto &pair : g_pages) {
-        std::cout << pair.first << " => " << pair.second << '\n';
-    }
+    std::mutex mutex;
+    mutex.lock();
+
+    std::thread t([&]{
+        std::cout << "Thread waiting..";
+        mutex.lock();
+        mutex.unlock();
+        std::cout << " done.." << std::endl;
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+    mutex.unlock();
+
+    t.join();
+
+    return 0;
+
 }
