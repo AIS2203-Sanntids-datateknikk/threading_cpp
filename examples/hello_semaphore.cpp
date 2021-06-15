@@ -14,10 +14,11 @@ int main() {
         threads[i] = std::thread([&m, &semaphore, i] {
             semaphore.acquire();
 
-          {
-              std::lock_guard<std::mutex> lock(m);
-              std::cout << "hello from thread " << i << ", count=" << semaphore.count() << std::endl;
-          }
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+            std::unique_lock<std::mutex> lock(m);
+            std::cout << "hello from thread " << i << ", count=" << semaphore.count() << std::endl;
+            lock.unlock();
 
             semaphore.release();
         });
