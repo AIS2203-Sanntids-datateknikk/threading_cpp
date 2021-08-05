@@ -10,3 +10,5 @@ add_executable(hello_future hello_future.cpp)
 add_executable(hello_semaphore hello_semaphore.cpp)
 
 add_executable(hello_condition_var hello_condition_variable.cpp)
+
+add_executable(hello_pool hello_pool.cpp)
