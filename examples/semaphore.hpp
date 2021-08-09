@@ -25,12 +25,8 @@ namespace example {
             count_++;
         }
 
-        unsigned int count() const {
+        unsigned int getCount() const {
             return count_;
-        };
-
-        unsigned int max() const {
-            return max_;
         }
 
     private:

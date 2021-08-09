@@ -17,7 +17,7 @@ int main() {
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
             std::unique_lock<std::mutex> lock(m);
-            std::cout << "hello from thread " << i << ", count=" << semaphore.count() << std::endl;
+            std::cout << "hello from thread " << i << ", count=" << semaphore.getCount() << std::endl;
             lock.unlock();
 
             semaphore.release();
