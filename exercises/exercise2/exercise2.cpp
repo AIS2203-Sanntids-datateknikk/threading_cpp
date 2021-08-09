@@ -1,11 +1,12 @@
 
+#include <chrono>
+#include <condition_variable>
 #include <iostream>
+#include <random>
+#include <sstream>
+#include <string>
 #include <thread>
 #include <vector>
-#include <chrono>
-#include <random>
-#include <string>
-#include <sstream>
 
 namespace {
 
@@ -13,17 +14,35 @@ namespace {
 
     struct StorageBox {
 
-        void put(const std::string& value) {
+        void put(const std::string &value) {
 
+            std::unique_lock<std::mutex> lck(mutex_);
+            while (!read_) cv_.wait(lck);
+
+            value_ = value;
+
+            read_ = false;
+            cv_.notify_all();
         }
 
         std::string get() {
 
-            return "";
+            std::unique_lock<std::mutex> lck(mutex_);
+            while (read_) cv_.wait(lck);
+
+            auto value = value_;
+
+            read_ = true;
+            cv_.notify_all();
+
+            return value;
         }
 
     private:
+        bool read_{false};
         std::string value_;
+        std::mutex mutex_;
+        std::condition_variable cv_;
     };
 
     void consumer(StorageBox *storage) {
@@ -35,7 +54,7 @@ namespace {
 
     void producer(StorageBox *storage, std::default_random_engine *generator, int id) {
 
-        std::uniform_int_distribution<int> distribution(0,100);
+        std::uniform_int_distribution<int> distribution(0, 100);
 
         while (!stop) {
 
